@@ -24,9 +24,41 @@ class YoutubeScrape(object):
         return self.soup.select(selector)[pos].get_text().strip()
 
 
-def scrape_html(html):
+class YoutubeScrapeChannel(object):
+    """ Scraper object to hold data """
+    def __init__(self, soup):
+        """ Initialize and scrape """
+        self.soup = soup
+        self.name = self.parse_string('.spf-link.branded-page-header-title-link.yt-uix-sessionlink')
+        self.subscribers = self.parse_string('.yt-subscription-button-subscriber-count-branded-horizontal.subscribed.yt-uix-tooltip')
+        self.description = self.parse_string('.about-description.branded-page-box-padding')
+
+        stats = self.soup.select('.about-stat')
+        self.views = int(stats[0].get_text().strip().split(' ')[1].replace(',',''))
+        self.join_date = stats[1].get_text().strip()
+
+        links = self.soup.select('.channel-links-item')
+        self.links = {}
+        for l in links:
+            name = l.a['title']
+            link = l.a['href']
+
+            if 'redirect' not in link:
+                self.links[name] = link
+
+
+    def parse_string(self, selector, pos=0):
+        """ Extract one particular element from soup """
+        return self.soup.select(selector)[pos].get_text().strip()
+
+
+def scrape_video_html(html):
     """ Return meta information about a video """
     return YoutubeScrape(BeautifulSoup(html, 'html.parser'))
+
+def scrape_channel_html(html):
+    """ Return meta information about a channel """
+    return YoutubeScrapeChannel(BeautifulSoup(html, 'html.parser'))
 
 
 def scrape_url(url):
@@ -35,4 +67,4 @@ def scrape_url(url):
     # set English as scraping language
     headers = {"Accept-Language": "en-US,en;q=0.5"}
     html = requests.get(url, headers=headers).text
-    return scrape_html(html)
+    return scrape_channel_html(html)
