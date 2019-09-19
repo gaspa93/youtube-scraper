@@ -15,15 +15,10 @@ print(video.dislike)
 # get channel metadata given the username
 channel = scrape_channel('https://www.youtube.com/user/teatroallascala')
 
-'''
 channel.get_channel_metadata()
-print(channel.name)
-print(channel.subscribers)
-print(channel.views)
+print(channel.name, channel.subscribers, channel.views, channel.join_date)
 print(channel.description)
-print(channel.join_date)
 print(channel.links)
-'''
 
 channel.get_channel_videos()
 for v in channel.videos:

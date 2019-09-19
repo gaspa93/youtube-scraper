@@ -13,14 +13,16 @@ To scrape Youtube video data, use scrape_video endpoint:
     >>> print(data.poster)
     'TheViperAOC'
 
-To scrape Youtube channel data, use scrape_channel endpoint:
+To scrape Youtube channel data, use scrape_channel endpoint. you can get either the channel metadata or the channel videos metadata:
+
     >>> from youtube_scraper.scraper import scrape_channel
     >>> channel = scrape_channel('https://www.youtube.com/user/teatroallascala')
     >>> channel.get_channel_metadata()
     >>> print(channel.name)
     'Teatro all Scala'
-    >>> print(channel.description)
-    'The Opera House making history since 1778'
+    >>> channel.get_channel_videos()
+    >>>for v in channel.videos:
+    >>>    print(v.id, v.title, v.duration, v.published, v.like, v.dislike)
 
 License
 -------
