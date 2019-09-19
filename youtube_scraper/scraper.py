@@ -59,7 +59,7 @@ class YoutubeScrapeChannel(object):
 
 
 def scrape_video(url):
-    """ Scrape a given url for youtube information """
+    """ Scrape a given video url for youtube information """
 
     # set English as scraping language
     headers = {"Accept-Language": "en-US,en;q=0.5"}
