@@ -2,6 +2,8 @@
 import re, requests
 from bs4 import BeautifulSoup
 
+YOUTUBE_URL = 'http://www.youtube.com'
+
 class YoutubeScrape(object):
     """ Scraper object to hold video data """
     def __init__(self, soup):
@@ -53,6 +55,26 @@ class YoutubeScrapeChannel(object):
             if 'redirect' not in link:
                 self.links[name] = link
 
+    def get_channel_videos(self):
+        """ Extract channel's videos metadata """
+        html = requests.get(self.url + '/videos', headers=self.headers).text
+
+        self.soup = BeautifulSoup(html, 'html.parser')
+        video_links = self.soup.select('.yt-lockup-title')  # .yt-uix-sessionlink.yt-uix-tile-link.spf-link.yt-ui-ellipsis.yt-ui-ellipsis-2
+        self.videos = []
+        for video in video_links:
+            video_id = int(video.a['aria-describedby'].split('-')[2])
+            video_url = YOUTUBE_URL + video.a['href']
+            video_duration = video.span.get_text().split(':')[1]
+
+            v_html = requests.get(video_url, headers=self.headers).text
+            video_metadata = YoutubeScrape(BeautifulSoup(v_html, 'html.parser'))
+            video_metadata.id = video_id
+            video_metadata.url = video_url
+            video_metadata.duration = video_duration
+
+            self.videos.append(video_metadata)
+
     def parse_string(self, selector, pos=0):
         """ Extract one particular element from soup """
         return self.soup.select(selector)[pos].get_text().strip()
@@ -60,8 +82,6 @@ class YoutubeScrapeChannel(object):
 
 def scrape_video(url):
     """ Scrape a given video url for youtube information """
-
-    # set English as scraping language
     headers = {"Accept-Language": "en-US,en;q=0.5"}
     html = requests.get(url, headers=headers).text
     return YoutubeScrape(BeautifulSoup(html, 'html.parser'))
