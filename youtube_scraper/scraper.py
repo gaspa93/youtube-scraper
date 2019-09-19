@@ -3,7 +3,7 @@ import re, requests
 from bs4 import BeautifulSoup
 
 class YoutubeScrape(object):
-    """ Scraper object to hold data """
+    """ Scraper object to hold video data """
     def __init__(self, soup):
         """ Initialize and scrape """
         self.soup = soup
@@ -25,13 +25,20 @@ class YoutubeScrape(object):
 
 
 class YoutubeScrapeChannel(object):
-    """ Scraper object to hold data """
-    def __init__(self, soup):
+    """ Scraper object to hold channel data """
+    def __init__(self, url):
         """ Initialize and scrape """
-        self.soup = soup
+        self.url = url
+        self.headers = {"Accept-Language": "en-US,en;q=0.5"}
+
+    def get_channel_metadata(self):
+        """ Extract channel metadata """
+        html = requests.get(self.url + '/about', headers=self.headers).text
+
+        self.soup = BeautifulSoup(html, 'html.parser')
         self.name = self.parse_string('.spf-link.branded-page-header-title-link.yt-uix-sessionlink')
         self.subscribers = self.parse_string('.yt-subscription-button-subscriber-count-branded-horizontal.subscribed.yt-uix-tooltip')
-        self.description = self.parse_string('.about-description.branded-page-box-padding')
+        self.description = self.parse_string('.about-description.branded-page-box-padding').replace('\n', ' ').replace('\t', ' ')
 
         stats = self.soup.select('.about-stat')
         self.views = int(stats[0].get_text().strip().split(' ')[1].replace(',',''))
@@ -46,25 +53,19 @@ class YoutubeScrapeChannel(object):
             if 'redirect' not in link:
                 self.links[name] = link
 
-
     def parse_string(self, selector, pos=0):
         """ Extract one particular element from soup """
         return self.soup.select(selector)[pos].get_text().strip()
 
 
-def scrape_video_html(html):
-    """ Return meta information about a video """
-    return YoutubeScrape(BeautifulSoup(html, 'html.parser'))
-
-def scrape_channel_html(html):
-    """ Return meta information about a channel """
-    return YoutubeScrapeChannel(BeautifulSoup(html, 'html.parser'))
-
-
-def scrape_url(url):
+def scrape_video(url):
     """ Scrape a given url for youtube information """
 
     # set English as scraping language
     headers = {"Accept-Language": "en-US,en;q=0.5"}
     html = requests.get(url, headers=headers).text
-    return scrape_channel_html(html)
+    return YoutubeScrape(BeautifulSoup(html, 'html.parser'))
+
+def scrape_channel(url):
+    """ Return meta information about a channel and its videos """
+    return YoutubeScrapeChannel(url)
