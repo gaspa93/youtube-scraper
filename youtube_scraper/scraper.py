@@ -1,8 +1,10 @@
 """ Library entry point """
 import re, requests
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 YOUTUBE_URL = 'http://www.youtube.com'
+YT_DATE_FORMAT = '%b %d, %Y'
 
 class YoutubeScrape(object):
     """ Scraper object to hold video data """
@@ -14,6 +16,8 @@ class YoutubeScrape(object):
         self.views = self.parse_int('.watch-view-count')
         self.published = self.parse_string('.watch-time-text')
         self.published = re.sub(r'(Published|Uploaded) on', '', self.published).strip()
+        self.published = re.sub(r'Streamed live on', '', self.published).strip()
+        self.published = datetime.strptime(self.published, YT_DATE_FORMAT)
         self.like = self.parse_int('.yt-uix-clickcard', 4)
         self.dislike = self.parse_int('.yt-uix-clickcard', 5)
 
@@ -44,7 +48,9 @@ class YoutubeScrapeChannel(object):
 
         stats = self.soup.select('.about-stat')
         self.views = int(stats[0].get_text().strip().split(' ')[1].replace(',',''))
-        self.join_date = stats[1].get_text().strip()
+        self.join_date = stats[1].get_text()
+        self.join_date = re.sub(r'Joined', '', self.join_date).strip()
+        self.join_date = datetime.strptime(self.join_date, YT_DATE_FORMAT)
 
         links = self.soup.select('.channel-links-item')
         self.links = {}
@@ -60,7 +66,7 @@ class YoutubeScrapeChannel(object):
         html = requests.get(self.url + '/videos', headers=self.headers).text
 
         self.soup = BeautifulSoup(html, 'html.parser')
-        video_links = self.soup.select('.yt-lockup-title')  # .yt-uix-sessionlink.yt-uix-tile-link.spf-link.yt-ui-ellipsis.yt-ui-ellipsis-2
+        video_links = self.soup.select('.yt-lockup-title')
         self.videos = []
         for video in video_links:
             video_id = int(video.a['aria-describedby'].split('-')[2])
